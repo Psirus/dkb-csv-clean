@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+import csv
+import sys
+import datetime
+from babel.numbers import parse_decimal
+
+# grr, why u no unicode?
+csvfile = open(sys.argv[1], encoding='iso-8859-1')
+
+transactions = csv.reader(csvfile, delimiter=';', quotechar='"')
+
+# skip the first seven lines
+for _ in range(7):
+    next(transactions)
+
+for row in transactions:
+    # correct date format
+    date = datetime.datetime.strptime(row[0], '%d.%m.%Y').strftime('%Y-%m-%d')
+    recipient = row[3].replace(',', ' ')
+    comment = row[4].replace(',', ' ')
+    # delete weird DKB markup in the Verwendungszweck
+    if comment.find('<br />') != -1:
+        comment = "Abrechnung DKB"
+    # correct value format
+    value = parse_decimal(row[7], locale='de')
+    if value == 0:
+        continue
+    print("{0}, {1}, {2}, {3}".format(date, value, recipient, comment))
